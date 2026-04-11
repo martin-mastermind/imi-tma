@@ -74,8 +74,8 @@ export async function POST(request: NextRequest) {
     const filepath = join(uploadsDir, filename);
     await writeFile(filepath, Buffer.from(buffer));
 
-    // Return URL that can be accessed
-    const fileUrl = `/uploads/${filename}`;
+    // Return URL that can be accessed via the API route
+    const fileUrl = `/api/uploads/${filename}`;
 
     return NextResponse.json({
       url: fileUrl,
