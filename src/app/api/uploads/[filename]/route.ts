@@ -1,6 +1,6 @@
 import { readFile } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, statSync } from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -15,15 +15,22 @@ export async function GET(
       return NextResponse.json({ error: 'Invalid filename' }, { status: 400 });
     }
 
-    // Try to read from Render persistent disk or local uploads
+    // Read from Render persistent disk (/var/data) or fallback to public/uploads
     const baseDir = process.env.RENDER ? '/var/data' : process.cwd();
     const uploadsDir = join(baseDir, 'uploads');
     const filepath = join(uploadsDir, filename);
 
+    console.log('Serving file:', { filename, baseDir, uploadsDir, filepath, exists: existsSync(filepath) });
+
     // Check if file exists
     if (!existsSync(filepath)) {
+      console.warn('File not found:', filepath);
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
     }
+
+    // Get file stats for logging
+    const stats = statSync(filepath);
+    console.log('File stats:', { size: stats.size, isFile: stats.isFile() });
 
     // Read and return the file
     const buffer = await readFile(filepath);
@@ -43,6 +50,6 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error serving file:', error);
-    return NextResponse.json({ error: 'Failed to serve file' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to serve file', details: String(error) }, { status: 500 });
   }
 }
