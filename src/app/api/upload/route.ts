@@ -6,9 +6,9 @@ import { createHmac } from 'crypto';
 
 // Verify API key for security
 function verifyApiKey(token: string | null): boolean {
-  const apiKey = process.env.UPLOAD_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_UPLOAD_API_KEY;
   if (!apiKey) {
-    console.warn('UPLOAD_API_KEY not set - uploads require valid API key');
+    console.warn('NEXT_PUBLIC_UPLOAD_API_KEY not set - uploads require valid API key');
     return false;
   }
   return token === apiKey;

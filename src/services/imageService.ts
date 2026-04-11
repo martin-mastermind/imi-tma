@@ -85,6 +85,9 @@ export async function uploadImageFile(file: File): Promise<string> {
 
   const res = await fetch('/api/upload', {
     method: 'POST',
+    headers: {
+      'x-api-key': process.env.NEXT_PUBLIC_UPLOAD_API_KEY || '',
+    },
     body: formData,
   });
 
