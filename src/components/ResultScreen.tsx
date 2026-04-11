@@ -37,13 +37,29 @@ export default function ResultScreen({
   const handleCopy = async () => {
     if (!imageUrl) return;
     try {
-      const res = await fetch(imageUrl);
-      const blob = await res.blob();
-      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+      const proxy = `/api/fetch-image?url=${encodeURIComponent(imageUrl)}`;
+      const res = await fetch(proxy);
+      if (res.ok) {
+        const blob = await res.blob();
+        const type =
+          blob.type && blob.type !== 'application/octet-stream'
+            ? blob.type
+            : 'image/jpeg';
+        await navigator.clipboard.write([new ClipboardItem({ [type]: blob })]);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+    } catch {
+      /* try text fallback */
+    }
+
+    try {
+      await navigator.clipboard.writeText(imageUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      alert('Copy failed');
+      alert('Не удалось скопировать изображение');
     }
   };
 
@@ -55,7 +71,7 @@ export default function ResultScreen({
 
     return (
       <motion.div
-        className="bg-black min-h-screen relative flex flex-col"
+        className="bg-bg-main min-h-screen relative flex flex-col"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.3 }}
@@ -96,7 +112,7 @@ export default function ResultScreen({
   if (!imageUrl) {
     return (
       <motion.div
-        className="bg-black min-h-screen flex items-center justify-center px-6"
+        className="bg-bg-main min-h-screen flex items-center justify-center px-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
@@ -117,7 +133,7 @@ export default function ResultScreen({
 
   return (
     <motion.div
-      className="bg-black min-h-screen relative flex flex-col"
+      className="bg-bg-main min-h-screen relative flex flex-col"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
