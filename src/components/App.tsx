@@ -28,9 +28,7 @@ export default function App() {
     images: UploadedImage[]
   ) => {
     await generate(prompt, aspectRatio, resolution, images);
-    if (state.status === 'success') {
-      goTo('result');
-    }
+    goTo('result');
   };
 
   const containerVariants = {
@@ -64,10 +62,14 @@ export default function App() {
           )}
         </>
       )}
-      {screen === 'result' && state.imageUrl && (
+      {screen === 'result' && (state.status === 'success' || state.status === 'error') && (
         <motion.div key="result" {...containerVariants}>
           <ResultScreen
+            variant={state.status === 'success' ? 'success' : 'error'}
             imageUrl={state.imageUrl}
+            error={state.error}
+            failCode={state.failCode}
+            failMsg={state.failMsg}
             onBack={goBack}
             onReset={() => {
               reset();

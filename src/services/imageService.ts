@@ -3,6 +3,37 @@ import type { AspectRatio, Resolution } from '@/types';
 const API_KEY = process.env.NEXT_PUBLIC_KIE_API_KEY!;
 const BASE_URL = 'https://api.kie.ai/api/v1';
 
+/** Thrown when KIE recordInfo reports a failed job (failCode / failMsg). */
+export class KieJobFailedError extends Error {
+  readonly failCode: string | null;
+  readonly failMsg: string | null;
+
+  constructor(failCode: string | null, failMsg: string | null) {
+    const message =
+      (typeof failMsg === 'string' && failMsg.trim()) ||
+      (failCode != null && String(failCode).trim()) ||
+      'Generation failed';
+    super(message);
+    this.name = 'KieJobFailedError';
+    this.failCode = failCode;
+    this.failMsg = failMsg;
+  }
+}
+
+function parseResultUrlFromResultJson(resultJson: unknown): string | undefined {
+  if (typeof resultJson !== 'string' || !resultJson.trim()) return undefined;
+  try {
+    const parsed = JSON.parse(resultJson) as { resultUrls?: unknown };
+    const urls = parsed.resultUrls;
+    if (Array.isArray(urls) && urls.length > 0 && typeof urls[0] === 'string') {
+      return urls[0];
+    }
+  } catch {
+    /* ignore malformed JSON */
+  }
+  return undefined;
+}
+
 export async function createTask(
   prompt: string,
   aspectRatio: AspectRatio,
@@ -48,13 +79,39 @@ export async function pollJobStatus(taskId: string): Promise<string> {
     });
     if (!res.ok) continue;
     const json = await res.json();
-    const data = json?.data ?? json;
-    const status = data?.status ?? data?.state;
-    if (status === 'completed' || status === 'success' || status === 'finished') {
-      const url = data?.output?.url ?? data?.output?.[0]?.url ?? data?.imageUrl ?? data?.result_url ?? data?.output;
+    if (json?.code !== undefined && json.code !== 200) continue;
+
+    const data = json?.data;
+    if (!data || typeof data !== 'object') continue;
+
+    const stateRaw = (data as { state?: unknown; status?: unknown }).state
+      ?? (data as { status?: unknown }).status;
+    const state = String(stateRaw ?? '').toLowerCase();
+
+    if (state === 'success' || state === 'completed' || state === 'finished') {
+      const d = data as Record<string, unknown>;
+      const url =
+        parseResultUrlFromResultJson(d.resultJson)
+        ?? (typeof d.output === 'object' && d.output !== null
+          ? (d.output as { url?: string; [key: string]: unknown }).url
+          : undefined)
+        ?? (Array.isArray(d.output) && typeof d.output[0] === 'object' && d.output[0] !== null
+          ? (d.output[0] as { url?: string }).url
+          : undefined)
+        ?? (typeof d.imageUrl === 'string' ? d.imageUrl : undefined)
+        ?? (typeof d.result_url === 'string' ? d.result_url : undefined)
+        ?? (typeof d.output === 'string' ? d.output : undefined);
       if (url && typeof url === 'string') return url;
+      throw new Error('Job finished but no image URL in response');
     }
-    if (status === 'failed' || status === 'error') throw new Error(data?.error ?? 'Generation failed');
+
+    if (state === 'fail' || state === 'failed' || state === 'error') {
+      const d = data as { failCode?: unknown; failMsg?: unknown };
+      throw new KieJobFailedError(
+        d.failCode != null ? String(d.failCode) : null,
+        d.failMsg != null ? String(d.failMsg) : null,
+      );
+    }
   }
   throw new Error('Timeout: generation took too long');
 }
