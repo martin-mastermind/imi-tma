@@ -2,9 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
+import { createHmac } from 'crypto';
+
+// Verify API key for security
+function verifyApiKey(token: string | null): boolean {
+  const apiKey = process.env.UPLOAD_API_KEY;
+  if (!apiKey) {
+    console.warn('UPLOAD_API_KEY not set - uploads require valid API key');
+    return false;
+  }
+  return token === apiKey;
+}
+
+// Verify request signature using HMAC
+function verifySignature(
+  body: string,
+  signature: string | null,
+  secret: string
+): boolean {
+  if (!signature) return false;
+  const computed = createHmac('sha256', secret).update(body).digest('hex');
+  return computed === signature;
+}
 
 export async function POST(request: NextRequest) {
   try {
+    // Security: Verify API key
+    const apiKey = request.headers.get('x-api-key');
+    if (!verifyApiKey(apiKey)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
@@ -24,13 +52,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File too large' }, { status: 400 });
     }
 
-    // Generate unique filename
+    // Generate cryptographically secure filename using hash
     const timestamp = Date.now();
     const ext = file.name.split('.').pop() || 'jpg';
-    const filename = `${timestamp}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
+    const buffer = await file.arrayBuffer();
+    const fileHash = createHmac('sha256', process.env.UPLOAD_SECRET || 'default-secret')
+      .update(Buffer.from(buffer))
+      .digest('hex')
+      .substring(0, 16);
+    const filename = `${fileHash}-${timestamp}.${ext}`;
 
-    // Save to public/uploads directory
-    const uploadsDir = join(process.cwd(), 'public', 'uploads');
+    // Save to Render persistent disk (/var/data) or fallback to public/uploads
+    const baseDir = process.env.RENDER ? '/var/data' : process.cwd();
+    const uploadsDir = join(baseDir, 'uploads');
 
     // Ensure directory exists
     if (!existsSync(uploadsDir)) {
@@ -38,7 +72,6 @@ export async function POST(request: NextRequest) {
     }
 
     const filepath = join(uploadsDir, filename);
-    const buffer = await file.arrayBuffer();
     await writeFile(filepath, Buffer.from(buffer));
 
     // Return URL that can be accessed
