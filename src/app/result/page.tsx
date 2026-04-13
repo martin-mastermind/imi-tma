@@ -5,13 +5,7 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useGeneration } from '@/context/GenerationContext';
 import ResultScreen from '@/components/ResultScreen';
-
-const motionPage = {
-  initial: { x: '100%', opacity: 0 },
-  animate: { x: 0, opacity: 1 },
-  exit: { x: '-100%', opacity: 0 },
-  transition: { duration: 0.2, ease: 'easeInOut' as const },
-};
+import { PAGE_TRANSITION } from '@/constants';
 
 export default function ResultPage() {
   const router = useRouter();
@@ -32,7 +26,7 @@ export default function ResultPage() {
   }
 
   return (
-    <motion.div key="result" {...motionPage}>
+    <motion.div key="result" {...PAGE_TRANSITION}>
       <ResultScreen
         variant={state.status === 'success' ? 'success' : 'error'}
         imageUrl={state.imageUrl}

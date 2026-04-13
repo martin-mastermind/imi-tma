@@ -1,77 +1,10 @@
 "use client";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import AgentCard from "./AgentCard";
 import Input from "./Input";
 import HeroCard from "./HeroCard";
-
-const AGENTS = [
-  {
-    name: "Сценарист Reels",
-    url: "/images/agent-reels-scriptwriter.png",
-  },
-  {
-    name: "SMM-Менеджер",
-    url: "/images/agent-smm-manager.png",
-  },
-  {
-    name: "ИИ-фотограф",
-    url: "/images/agent-ai-photographer.png",
-  },
-  {
-    name: "Нейрофотограф",
-    url: "/images/agent-neuro-photographer.png",
-  },
-];
-
-const HERO_CARDS = [
-  {
-    name: "image-gen",
-    title: "Сгенерировать\nизображение",
-    image: "/images/hero-image-generation.png",
-    tags: [
-      ["Banana Pro", "Flux", "Midjourney"],
-      ["GPT Image", "Seedream", "Ideogram"],
-    ],
-    functional: true,
-    bottom: "bottom-[40px]",
-  },
-  {
-    name: "video-gen",
-    title: "Сгенерировать видео",
-    image: "/images/hero-video-generation.png",
-    tags: [["Kling", "Veo3", "Hailuo", "Sora 2"]],
-  },
-  {
-    name: "train",
-    title: "Натренировать\nмодель с помощью\nсвоих фотографий",
-    image: "/images/hero-model-training.png",
-    bottom: "bottom-[51px]",
-  },
-  {
-    name: "process",
-    title: "Обработать фото",
-    image: "/images/hero-photo-processing.png",
-    height: "h-[320px]",
-    bottom: "bottom-[46px]",
-  },
-];
-
-const TEMPLATES = [
-  {
-    label: "Soft Roses",
-    url: "/images/template-soft-roses-1.png",
-  },
-  {
-    label: "Soft Roses",
-    url: "/images/template-soft-roses-2.png",
-  },
-  {
-    label: "Soft Roses",
-    url: "/images/template-soft-roses-3.png",
-  },
-];
+import { AGENTS, HERO_CARDS, HOME_TEMPLATES } from "@/constants";
 
 interface HomeScreenProps {
   onNavigateToGenerator: () => void;
@@ -161,7 +94,7 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
           Фото и видео шаблоны
         </h2>
         <div className="flex gap-[22px] overflow-x-auto -mx-4 px-4">
-          {TEMPLATES.map((template, idx) => (
+          {HOME_TEMPLATES.map((template, idx) => (
             <div
               key={idx}
               className="relative w-[222px] h-[305px] rounded-[16px] overflow-hidden flex-shrink-0"
