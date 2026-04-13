@@ -15,6 +15,7 @@ import { newUploadId } from "@/lib/id";
 import CloseIcon from "@/../public/icons/icon-close.svg";
 import PhotoIcon from "@/../public/icons/icon-photo.svg";
 import ChevronIcon from "@/../public/icons/icon-chevron.svg";
+import GenerationWaitOverlay from "./GenerationWaitOverlay";
 
 interface GeneratorScreenProps {
   onClose: () => void;
@@ -141,8 +142,10 @@ export default function GeneratorScreen({
         <motion.button
           type="button"
           onClick={onClose}
-          className="bg-transparent rounded-[10px] p-2 mt-[17px] hover:bg-[rgba(255,255,255,0.1)]"
-          whileTap={{ scale: 0.9 }}
+          disabled={isLoading}
+          aria-disabled={isLoading}
+          className="bg-transparent rounded-[10px] p-2 mt-[17px] hover:bg-[rgba(255,255,255,0.1)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40"
+          whileTap={isLoading ? undefined : { scale: 0.9 }}
         >
           <CloseIcon width={20} height={20} />
         </motion.button>
@@ -249,6 +252,8 @@ export default function GeneratorScreen({
           isLoading={isLoading}
         />
       </div>
+
+      {isLoading ? <GenerationWaitOverlay /> : null}
     </div>
   );
 }

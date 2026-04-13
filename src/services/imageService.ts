@@ -56,11 +56,12 @@ export async function createTask(
 }
 
 export async function pollJobStatus(taskId: string): Promise<string> {
-  const maxAttempts = 120;
+  const maxAttempts = 50;
+  const pollIntervalMs = 5000;
 
   for (let i = 0; i < maxAttempts; i++) {
     if (i > 0) {
-      await new Promise((r) => setTimeout(r, 2000));
+      await new Promise((r) => setTimeout(r, pollIntervalMs));
     }
 
     const res = await fetch(`/api/kie/task/${encodeURIComponent(taskId)}`, {
