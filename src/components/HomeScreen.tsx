@@ -83,6 +83,7 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
             tags={card.tags}
             height={card.height}
             bottom={card.bottom}
+            marginBottom={card.marginBottom}
             functional={card.functional}
             onClick={() => card.functional && onNavigateToGenerator()}
           />
