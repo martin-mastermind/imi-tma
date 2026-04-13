@@ -24,9 +24,7 @@ export default function ImagePreview({
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.2 }}
     >
-      {/* Image Container */}
       <div className="relative w-[169px] h-[124px] rounded-[8px] overflow-hidden group">
-        {/* Image */}
         <Image
           src={imageUrl}
           alt={imageName}
@@ -35,10 +33,8 @@ export default function ImagePreview({
           sizes="169px"
         />
 
-        {/* Dark Overlay */}
         <div className="absolute inset-0 bg-black/45 rounded-[8px]" />
 
-        {/* Text Labels - Bottom Left Corner */}
         <div className="absolute bottom-[16px] left-[16px] flex flex-col z-5 max-w-[137px]">
           <p className="text-[#B7BFCE] text-[12px] font-norms font-normal leading-[1.25] truncate">
             {templateName}
@@ -47,12 +43,9 @@ export default function ImagePreview({
             {imageName}
           </p>
         </div>
-
-        {/* Delete Button */}
         <motion.button
           onClick={onDelete}
-          className="absolute top-[3px] right-[5px] w-[20px] h-[20px] z-10 flex items-center justify-center rounded-[6px] transition-colors"
-          style={{ backgroundColor: "rgba(15, 15, 17, 0.75)" }}
+          className="absolute top-[3px] right-[5px] w-[20px] h-[20px] z-10 flex items-center justify-center rounded-[6px] bg-[rgba(15,15,17,0.75)] transition-colors hover:bg-[rgba(15,15,17,0.9)]"
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >

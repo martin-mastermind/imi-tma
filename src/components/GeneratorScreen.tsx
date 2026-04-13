@@ -299,7 +299,7 @@ export default function GeneratorScreen({
         </div>
 
         <div className="flex flex-col gap-[10px] mt-[13px] pl-4 pr-[13px]">
-          <div className="ml-[4px] flex gap-[6px]">
+          <div className="flex gap-[6px] ml-[4px]">
             <motion.button
               onClick={() => {
                 const currentIndex = ASPECT_RATIOS.indexOf(aspectRatio);

@@ -35,6 +35,7 @@ const HERO_CARDS = [
       ["GPT Image", "Seedream", "Ideogram"],
     ],
     functional: true,
+    bottom: "bottom-[40px]",
   },
   {
     name: "video-gen",
@@ -79,7 +80,6 @@ interface HomeScreenProps {
 export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
   return (
     <div className="bg-bg-main min-h-screen text-text-light overflow-y-auto">
-      {/* Header */}
       <div className="pl-[25px] pr-[16px] flex justify-between items-center">
         <div className="flex mt-[16px] items-center gap-3">
           <Image src="/images/logo-imi.svg" alt="IMI" width={62} height={24} />
@@ -116,19 +116,16 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
         </div>
       </div>
 
-      {/* Heading */}
       <div className="text-center mt-[24px] w-[265px] mx-auto">
         <h1 className="font-machina font-bold text-[24px] text-white leading-[30px]">
           Чем я могу помочь Вам сегодня?
         </h1>
       </div>
 
-      {/* Input */}
       <div className="mt-[25px] mx-4">
         <Input />
       </div>
 
-      {/* AI Agents Section */}
       <div className="mt-[28px] px-[21px]">
         <h2 className="font-machina font-medium text-[22px] text-white leading-[24.2px] mb-[12px] px-[5px]">
           Умные AI-Агенты
@@ -144,7 +141,6 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
         </div>
       </div>
 
-      {/* Hero Cards */}
       <div className="mt-[27px] px-[15px] flex flex-col gap-[16px]">
         {HERO_CARDS.map((card) => (
           <HeroCard
@@ -160,12 +156,11 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
         ))}
       </div>
 
-      {/* Templates Section */}
       <div className="mt-[31px] px-[18px] flex flex-col gap-[10px]">
         <h2 className="w-[241px] px-[4px] font-machina font-medium text-[26px] leading-[28px] text-white mb-4">
           Фото и видео шаблоны
         </h2>
-        <div className="flex gap-4 overflow-x-auto -mx-4 px-4">
+        <div className="flex gap-[22px] overflow-x-auto -mx-4 px-4">
           {TEMPLATES.map((template, idx) => (
             <div
               key={idx}
@@ -186,7 +181,6 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
         </div>
       </div>
 
-      {/* Show All Button */}
       <div className="mt-[47px] text-center">
         <motion.button
           className="bg-blue-accent w-[157px] rounded-[10px] h-[48px] flex items-center mx-auto text-white text-[14px] font-norms leading-[24px] tracking-[-0.4px]"

@@ -14,11 +14,6 @@ export default function UploadButton({
   className = "",
   tapScale = 0.95,
 }: UploadButtonProps) {
-  const svgClassNames = !inRow ? "" : "mt-[19px]";
-  const pClassNames = !inRow
-    ? "gap-[7px] ml-[-14px] mt-[4px]"
-    : "flex-col mt-[8px] ml-[3px] justify-center";
-
   return (
     <motion.button
       onClick={onClick}
@@ -26,11 +21,17 @@ export default function UploadButton({
       whileTap={{ scale: tapScale }}
     >
       <UploadIcon
-        className={`ml-[-1px] ${svgClassNames}`}
+        className={inRow ? "ml-[-1px] mt-[19px]" : "ml-[-1px]"}
         width={41}
         height={41}
       />
-      <p className={`flex items-center ${pClassNames}`}>
+      <p
+        className={
+          inRow
+            ? "flex flex-col items-center mt-[8px] ml-[3px] justify-center"
+            : "flex items-center gap-[7px] ml-[-14px] mt-[4px]"
+        }
+      >
         <span className="text-text-muted text-[14px] font-norms">
           Загрузите изображения
         </span>

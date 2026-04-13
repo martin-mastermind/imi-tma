@@ -28,18 +28,12 @@ export default function HeroCard({
       whileTap={functional ? { scale: 0.98 } : {}}
     >
       <Image src={image} alt={title} fill className="object-cover" priority />
-      {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-[rgba(0,0,0,0.7)] via-[rgba(0,0,0,0.3)] via-50% to-transparent" />
-
-      {/* Content container */}
       <div className={`absolute ${bottom} flex flex-col justify-end px-[32px]`}>
-        {/* Title - positioned at bottom */}
         <div className="flex flex-col gap-[19px]">
           <h3 className="font-machina font-medium text-[26px] text-white leading-[28.6px] whitespace-pre-line">
             {title}
           </h3>
-
-          {/* Tags */}
           {tags && (
             <div className="flex flex-wrap gap-[13px]">
               {tags.flat().map((tag) => (
