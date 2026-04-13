@@ -8,6 +8,7 @@ interface HeroCardProps {
   tags?: string[][];
   height?: string;
   bottom?: string;
+  marginBottom?: string;
   functional?: boolean;
   onClick?: () => void;
 }
@@ -18,12 +19,13 @@ export default function HeroCard({
   tags,
   height = "h-[435px]",
   bottom = "bottom-[32px]",
+  marginBottom,
   functional = false,
   onClick,
 }: HeroCardProps) {
   return (
     <motion.div
-      className={`rounded-[20px] overflow-hidden relative cursor-pointer group ${height}`}
+      className={`rounded-[20px] overflow-hidden relative cursor-pointer group ${height} ${marginBottom}`}
       onClick={onClick}
       whileTap={functional ? { scale: 0.98 } : {}}
     >

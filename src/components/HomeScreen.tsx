@@ -74,7 +74,7 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
         </div>
       </div>
 
-      <div className="mt-[27px] px-[15px] flex flex-col gap-[16px]">
+      <div className="mt-[19px] px-[15px] flex flex-col gap-[16px]">
         {HERO_CARDS.map((card) => (
           <HeroCard
             key={card.name}
