@@ -1,7 +1,4 @@
-import type { AspectRatio, Resolution } from '@/types';
-
-const API_KEY = process.env.NEXT_PUBLIC_KIE_API_KEY!;
-const BASE_URL = 'https://api.kie.ai/api/v1';
+import type { AspectRatio, Resolution } from "@/types";
 
 /** Thrown when KIE recordInfo reports a failed job (failCode / failMsg). */
 export class KieJobFailedError extends Error {
@@ -10,131 +7,116 @@ export class KieJobFailedError extends Error {
 
   constructor(failCode: string | null, failMsg: string | null) {
     const message =
-      (typeof failMsg === 'string' && failMsg.trim()) ||
+      (typeof failMsg === "string" && failMsg.trim()) ||
       (failCode != null && String(failCode).trim()) ||
-      'Generation failed';
+      "Generation failed";
     super(message);
-    this.name = 'KieJobFailedError';
+    this.name = "KieJobFailedError";
     this.failCode = failCode;
     this.failMsg = failMsg;
   }
 }
 
-function parseResultUrlFromResultJson(resultJson: unknown): string | undefined {
-  if (typeof resultJson !== 'string' || !resultJson.trim()) return undefined;
-  try {
-    const parsed = JSON.parse(resultJson) as { resultUrls?: unknown };
-    const urls = parsed.resultUrls;
-    if (Array.isArray(urls) && urls.length > 0 && typeof urls[0] === 'string') {
-      return urls[0];
-    }
-  } catch {
-    /* ignore malformed JSON */
-  }
-  return undefined;
-}
+type KiePollJson = {
+  state: "pending" | "success" | "failed";
+  imageUrl?: string;
+  failCode?: string | null;
+  failMsg?: string | null;
+  errorMessage?: string;
+};
 
 export async function createTask(
   prompt: string,
   aspectRatio: AspectRatio,
-  resolution: Resolution = '1K',
+  resolution: Resolution = "1K",
   imageInputs: string[] = [],
 ): Promise<string> {
-  const body: Record<string, unknown> = {
-    model: 'nano-banana-2',
-    input: {
-      prompt: prompt.trim(),
-      aspect_ratio: aspectRatio,
-      resolution: resolution,
-      output_format: 'jpg',
-      ...(imageInputs.length > 0 ? { image_input: imageInputs } : {}),
-    },
-  };
-
-  const res = await fetch(`${BASE_URL}/jobs/createTask`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify(body),
+  const res = await fetch("/api/kie/create-task", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      prompt,
+      aspectRatio,
+      resolution,
+      imageInputs,
+    }),
   });
-  if (!res.ok) throw new Error(`API error ${res.status}`);
-  const json = await res.json();
-  const taskId = json?.data?.taskId ?? json?.data?.task_id ?? json?.taskId;
-  if (!taskId) throw new Error('No taskId in response');
-  return String(taskId);
+
+  const json = (await res.json().catch(() => ({}))) as {
+    taskId?: string;
+    error?: string;
+  };
+  if (!res.ok) {
+    throw new Error(
+      typeof json.error === "string" ? json.error : `API error ${res.status}`,
+    );
+  }
+  if (!json.taskId) throw new Error("No taskId in response");
+  return json.taskId;
 }
 
 export async function pollJobStatus(taskId: string): Promise<string> {
-  const maxAttempts = 120; // 4 minutes (2 seconds * 120)
+  const maxAttempts = 120;
 
   for (let i = 0; i < maxAttempts; i++) {
     if (i > 0) {
       await new Promise((r) => setTimeout(r, 2000));
     }
 
-    const res = await fetch(`${BASE_URL}/jobs/recordInfo?taskId=${taskId}`, {
-      headers: { Authorization: `Bearer ${API_KEY}` },
+    const res = await fetch(`/api/kie/task/${encodeURIComponent(taskId)}`, {
+      cache: "no-store",
     });
     if (!res.ok) continue;
-    const json = await res.json();
-    if (json?.code !== undefined && json.code !== 200) continue;
 
-    const data = json?.data;
-    if (!data || typeof data !== 'object') continue;
+    const json = (await res.json().catch(() => null)) as KiePollJson | null;
+    if (!json || typeof json.state !== "string") continue;
 
-    const stateRaw = (data as { state?: unknown; status?: unknown }).state
-      ?? (data as { status?: unknown }).status;
-    const state = String(stateRaw ?? '').toLowerCase();
-
-    if (state === 'success' || state === 'completed' || state === 'finished') {
-      const d = data as Record<string, unknown>;
-      const url =
-        parseResultUrlFromResultJson(d.resultJson)
-        ?? (typeof d.output === 'object' && d.output !== null
-          ? (d.output as { url?: string; [key: string]: unknown }).url
-          : undefined)
-        ?? (Array.isArray(d.output) && typeof d.output[0] === 'object' && d.output[0] !== null
-          ? (d.output[0] as { url?: string }).url
-          : undefined)
-        ?? (typeof d.imageUrl === 'string' ? d.imageUrl : undefined)
-        ?? (typeof d.result_url === 'string' ? d.result_url : undefined)
-        ?? (typeof d.output === 'string' ? d.output : undefined);
-      if (url && typeof url === 'string') return url;
-      throw new Error('Job finished but no image URL in response');
+    if (json.state === "success" && json.imageUrl) {
+      return json.imageUrl;
     }
 
-    if (state === 'fail' || state === 'failed' || state === 'error') {
-      const d = data as { failCode?: unknown; failMsg?: unknown };
+    if (json.state === "failed") {
+      if (typeof json.errorMessage === "string" && json.errorMessage.trim()) {
+        throw new Error(json.errorMessage.trim());
+      }
       throw new KieJobFailedError(
-        d.failCode != null ? String(d.failCode) : null,
-        d.failMsg != null ? String(d.failMsg) : null,
+        json.failCode != null ? String(json.failCode) : null,
+        json.failMsg != null ? String(json.failMsg) : null,
       );
     }
   }
-  throw new Error('Timeout: generation took too long');
+  throw new Error("Timeout: generation took too long");
 }
 
 export function validateImageFile(file: File): void {
-  if (file.size > 30 * 1024 * 1024) throw new Error('File too large (max 30MB)');
-  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Only JPEG, PNG, and WebP allowed');
+  if (file.size > 30 * 1024 * 1024)
+    throw new Error("File too large (max 30MB)");
+  if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+    throw new Error("Only JPEG, PNG, and WebP allowed");
+  }
 }
 
 export async function uploadImageFile(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append('file', file);
+  const tokenRes = await fetch("/api/upload/token");
+  if (!tokenRes.ok) {
+    throw new Error("Could not prepare upload");
+  }
+  const { token } = (await tokenRes.json()) as { token?: string };
+  if (!token) throw new Error("No upload token");
 
-  const res = await fetch('/api/upload', {
-    method: 'POST',
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await fetch("/api/upload", {
+    method: "POST",
     headers: {
-      'x-api-key': process.env.NEXT_PUBLIC_UPLOAD_API_KEY || '',
+      Authorization: `Bearer ${token}`,
     },
     body: formData,
   });
 
   if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
-  const json = await res.json();
-  if (!json.url) throw new Error('No URL in upload response');
+  const json = (await res.json()) as { url?: string };
+  if (!json.url) throw new Error("No URL in upload response");
   return json.url;
 }

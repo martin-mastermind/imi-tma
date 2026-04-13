@@ -95,9 +95,9 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
           Фото и видео шаблоны
         </h2>
         <div className="flex gap-[22px] overflow-x-auto -mx-4 px-4">
-          {HOME_TEMPLATES.map((template, idx) => (
+          {HOME_TEMPLATES.map((template) => (
             <div
-              key={idx}
+              key={template.id}
               className="relative w-[222px] h-[305px] rounded-[16px] overflow-hidden flex-shrink-0"
             >
               <Image
@@ -117,6 +117,7 @@ export default function HomeScreen({ onNavigateToGenerator }: HomeScreenProps) {
 
       <div className="mt-[47px] text-center">
         <motion.button
+          type="button"
           className="bg-blue-accent w-[157px] rounded-[10px] h-[48px] flex items-center mx-auto text-white text-[14px] font-norms leading-[24px] tracking-[-0.4px]"
           whileTap={{ scale: 0.95 }}
         >

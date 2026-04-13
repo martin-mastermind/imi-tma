@@ -1,7 +1,11 @@
-'use client';
+"use client";
 
-import { GenerationProvider } from '@/context/GenerationContext';
-import TelegramChrome from '@/components/TelegramChrome';
+import dynamic from "next/dynamic";
+import { GenerationProvider } from "@/context/GenerationContext";
+
+const TelegramChrome = dynamic(() => import("@/components/TelegramChrome"), {
+  ssr: false,
+});
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (

@@ -55,18 +55,21 @@ export const HERO_CARDS = [
 
 export const HOME_TEMPLATES = [
   {
+    id: "home-template-soft-roses-1",
     label: "Soft Roses",
     url: "/images/template-soft-roses-1.png",
   },
   {
+    id: "home-template-soft-roses-2",
     label: "Soft Roses",
     url: "/images/template-soft-roses-2.png",
   },
   {
+    id: "home-template-soft-roses-3",
     label: "Soft Roses",
     url: "/images/template-soft-roses-3.png",
   },
-];
+] as const;
 
 export const GENERATOR_TEMPLATES = [
   {

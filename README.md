@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# IMI AI — Telegram Mini App
 
-## Getting Started
+Next.js (App Router) + React 19: главный экран, генератор изображений через KIE.ai API, загрузка референсов на сервер, экран результата. Стили — Tailwind CSS 4, анимации — Framer Motion.
 
-First, run the development server:
+## Требования
+
+- Node.js 20+
+- Ключ [KIE.ai](https://kie.ai/) для серверного прокси (`KIE_API_KEY`)
+
+## Установка и запуск
 
 ```bash
+npm install
+cp .env.example .env.local
+# Заполните KIE_API_KEY и при необходимости UPLOAD_TOKEN_SECRET
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Откройте [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build   # production-сборка
+npm run start   # запуск после build
+npm run lint    # ESLint (eslint-config-next)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Переменные окружения
 
-## Learn More
+См. [.env.example](.env.example). Важно:
 
-To learn more about Next.js, take a look at the following resources:
+- **`KIE_API_KEY`** — вызывается только из Route Handlers (`/api/kie/*`), в браузер не попадает. Если у вас был `NEXT_PUBLIC_KIE_API_KEY`, перенесите значение в `KIE_API_KEY` и удалите старую переменную.
+- **`UPLOAD_TOKEN_SECRET`** — подпись одноразовых токенов загрузки; в production задайте явное значение. В `development` без секрета используется фиксированный dev-секрет.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Архитектура (кратко)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Область                 | Путь                                                                   |
+| ----------------------- | ---------------------------------------------------------------------- |
+| Страницы                | `src/app/`                                                             |
+| UI                      | `src/components/`                                                      |
+| Состояние генерации     | `src/context/GenerationContext.tsx`, `src/hooks/useImageGeneration.ts` |
+| Клиент → ваш API        | `src/services/imageService.ts`                                         |
+| KIE + upload на сервере | `src/app/api/kie/`, `src/app/api/upload/`                              |
 
-## Deploy on Vercel
+## Next.js
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Включён `images.unoptimized` — удобно для внешних URL результатов и мини-приложений; при переносе на Vercel Image Optimization можно пересмотреть.
+- Шрифты Neue Machina / TT Norms подключаются в `src/app/globals.css`; корневой layout не дублирует `next/font` для основного текста.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Деплой
+
+Сборка: `npm run build`. На [Render](https://render.com/) каталог загрузок использует диск при `RENDER=true` (см. `src/app/api/upload/route.ts` и `src/app/api/uploads/[filename]/route.ts`). Задайте `KIE_API_KEY` и `UPLOAD_TOKEN_SECRET` в настройках сервиса.

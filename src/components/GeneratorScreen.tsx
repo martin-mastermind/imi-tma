@@ -10,6 +10,7 @@ import SectionHeader from "./SectionHeader";
 import type { AspectRatio, Resolution, UploadedImage } from "@/types";
 import { validateImageFile, uploadImageFile } from "@/services/imageService";
 import { GENERATOR_TEMPLATES } from "@/constants";
+import { newUploadId } from "@/lib/id";
 
 import CloseIcon from "@/../public/icons/icon-close.svg";
 import PhotoIcon from "@/../public/icons/icon-photo.svg";
@@ -37,11 +38,14 @@ export default function GeneratorScreen({
   const [uploads, setUploads] = useState<UploadedImage[]>([]);
   const [selectedModel, setSelectedModel] = useState("Nano Banana Pro");
   const [templatePrompts, setTemplatePrompts] = useState<string[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [promptError, setPromptError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (uploads.length >= 10) return;
     const files = Array.from(e.target.files || []);
+    setUploadError(null);
     for (const file of files) {
       try {
         validateImageFile(file);
@@ -52,7 +56,7 @@ export default function GeneratorScreen({
             : [
                 ...u,
                 {
-                  id: Math.random().toString(),
+                  id: newUploadId(),
                   dataUrl: url,
                   label: file.name,
                   isTemplate: false,
@@ -60,7 +64,7 @@ export default function GeneratorScreen({
               ],
         );
       } catch (err) {
-        alert(err instanceof Error ? err.message : "Upload failed");
+        setUploadError(err instanceof Error ? err.message : "Upload failed");
       }
     }
     if (fileInputRef.current) fileInputRef.current.value = "";
@@ -84,7 +88,7 @@ export default function GeneratorScreen({
       setUploads((u) => [
         ...u,
         {
-          id: Math.random().toString(),
+          id: newUploadId(),
           dataUrl: template.url,
           label: templateLabel,
           isTemplate: true,
@@ -116,9 +120,10 @@ export default function GeneratorScreen({
       .join(". ");
 
     if (!finalPrompt.trim()) {
-      alert("Enter a prompt");
+      setPromptError("Введите описание или выберите шаблон");
       return;
     }
+    setPromptError(null);
     onGenerate(finalPrompt, aspectRatio, resolution, uploads);
   };
 
@@ -134,6 +139,7 @@ export default function GeneratorScreen({
           <ChevronIcon width={16} height={16} className="text-text-muted" />
         </div>
         <motion.button
+          type="button"
           onClick={onClose}
           className="bg-transparent rounded-[10px] p-2 mt-[17px] hover:bg-[rgba(255,255,255,0.1)]"
           whileTap={{ scale: 0.9 }}
@@ -187,9 +193,21 @@ export default function GeneratorScreen({
           className="hidden"
         />
 
+        {uploadError ? (
+          <p
+            className="mx-4 mt-2 text-[14px] text-red-400 font-norms"
+            role="alert"
+          >
+            {uploadError}
+          </p>
+        ) : null}
+
         <PromptInput
           value={prompt}
-          onChange={setPrompt}
+          onChange={(v) => {
+            setPrompt(v);
+            setPromptError(null);
+          }}
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}
         />
@@ -212,6 +230,15 @@ export default function GeneratorScreen({
             ))}
           </div>
         </div>
+
+        {promptError ? (
+          <p
+            className="mt-2 px-4 text-[14px] text-red-400 font-norms"
+            role="alert"
+          >
+            {promptError}
+          </p>
+        ) : null}
 
         <GenerationControls
           aspectRatio={aspectRatio}
