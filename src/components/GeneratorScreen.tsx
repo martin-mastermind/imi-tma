@@ -66,7 +66,9 @@ export default function GeneratorScreen({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleTemplateClick = async (template: (typeof GENERATOR_TEMPLATES)[0]) => {
+  const handleTemplateClick = async (
+    template: (typeof GENERATOR_TEMPLATES)[0],
+  ) => {
     const templateLabel = `Шаблон ${template.name}`;
     const isAlreadySelected = uploads.some((u) => u.label === templateLabel);
 
@@ -139,7 +141,7 @@ export default function GeneratorScreen({
         </motion.button>
       </div>
 
-      <div className="pb-[180px]">
+      <div>
         <div className="mx-4 mt-4 flex gap-3">
           {uploads.length > 0 ? (
             <div className="flex gap-[7px] w-full overflow-x-auto">
@@ -192,8 +194,12 @@ export default function GeneratorScreen({
         />
 
         <div className="mt-[20px] px-4">
-          <SectionHeader title="Фото шаблоны" showLink linkText="Показать все" />
-          <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4">
+          <SectionHeader
+            title="Фото шаблоны"
+            showLink
+            linkText="Показать все"
+          />
+          <div className="flex gap-3 overflow-x-auto -mx-4 px-4">
             {GENERATOR_TEMPLATES.map((t) => (
               <TemplateCard
                 key={t.name}
