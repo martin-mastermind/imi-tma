@@ -1,5 +1,3 @@
-import type { AspectRatio } from "@/types";
-
 export const AGENTS = [
   {
     name: "Сценарист Reels",
@@ -99,18 +97,3 @@ export const GENERATOR_TEMPLATES = [
   },
 ];
 
-export const MODELS = ["Nano Banana Pro"];
-
-export const ASPECT_RATIOS: AspectRatio[] = [
-  "1:1",
-  "4:3",
-  "16:9",
-  "9:16",
-  "3:2",
-  "2:3",
-  "4:5",
-  "5:4",
-  "21:9",
-];
-
-export const RESOLUTIONS = ["1K", "2K", "4K"] as const;

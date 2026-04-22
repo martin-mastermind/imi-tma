@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import TemplateCard from "./TemplateCard";
 import UploadButton from "./UploadButton";
@@ -7,10 +7,12 @@ import ImagePreview from "./ImagePreview";
 import PromptInput from "./PromptInput";
 import GenerationControls from "./GenerationControls";
 import SectionHeader from "./SectionHeader";
-import type { AspectRatio, Resolution, UploadedImage } from "@/types";
+import type { UploadedImage } from "@/types";
 import { validateImageFile, uploadImageFile } from "@/services/imageService";
 import { GENERATOR_TEMPLATES } from "@/constants";
 import { newUploadId } from "@/lib/id";
+import { computePrice } from "@/lib/catalog";
+import type { PublicModel } from "@/lib/catalog";
 
 import CloseIcon from "@/../public/icons/icon-close.svg";
 import PhotoIcon from "@/../public/icons/icon-photo.svg";
@@ -21,8 +23,9 @@ interface GeneratorScreenProps {
   onClose: () => void;
   onGenerate: (
     prompt: string,
-    aspectRatio: AspectRatio,
-    resolution: Resolution,
+    modelId: string,
+    selectedOptions: Record<string, string>,
+    expectedPrice: number,
     images: UploadedImage[],
   ) => void;
   isLoading: boolean;
@@ -34,14 +37,28 @@ export default function GeneratorScreen({
   isLoading,
 }: GeneratorScreenProps) {
   const [prompt, setPrompt] = useState("");
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("16:9");
-  const [resolution, setResolution] = useState<Resolution>("1K");
   const [uploads, setUploads] = useState<UploadedImage[]>([]);
-  const [selectedModel, setSelectedModel] = useState("Nano Banana Pro");
+  const [models, setModels] = useState<PublicModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState<PublicModel | null>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({
+    resolution: "1K",
+    aspect_ratio: "1:1",
+    output_format: "jpg",
+  });
   const [templatePrompts, setTemplatePrompts] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [promptError, setPromptError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/models")
+      .then((res) => res.json())
+      .then((data: PublicModel[]) => {
+        setModels(data);
+        if (data.length > 0) setSelectedModel(data[0]);
+      })
+      .catch((err) => console.error("Failed to load models:", err));
+  }, []);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (uploads.length >= 10) return;
@@ -124,8 +141,13 @@ export default function GeneratorScreen({
       setPromptError("Введите описание или выберите шаблон");
       return;
     }
+    if (!selectedModel) {
+      setPromptError("Выберите модель");
+      return;
+    }
     setPromptError(null);
-    onGenerate(finalPrompt, aspectRatio, resolution, uploads);
+    const expectedPrice = computePrice(selectedModel.id, selectedOptions);
+    onGenerate(finalPrompt, selectedModel.id, selectedOptions, expectedPrice, uploads);
   };
 
   return (
@@ -211,8 +233,18 @@ export default function GeneratorScreen({
             setPrompt(v);
             setPromptError(null);
           }}
-          selectedModel={selectedModel}
-          onModelChange={setSelectedModel}
+          selectedModel={selectedModel?.id || ""}
+          onModelChange={(modelId) => {
+            const model = models.find((m) => m.id === modelId);
+            if (model) {
+              setSelectedModel(model);
+              setSelectedOptions({
+                resolution: "1K",
+                aspect_ratio: "1:1",
+                output_format: "jpg",
+              });
+            }
+          }}
         />
 
         <div className="mt-[20px] px-4">
@@ -243,14 +275,15 @@ export default function GeneratorScreen({
           </p>
         ) : null}
 
-        <GenerationControls
-          aspectRatio={aspectRatio}
-          onAspectRatioChange={setAspectRatio}
-          resolution={resolution}
-          onResolutionChange={setResolution}
-          onGenerate={handleGenerate}
-          isLoading={isLoading}
-        />
+        {selectedModel && (
+          <GenerationControls
+            model={selectedModel}
+            selectedOptions={selectedOptions}
+            onOptionsChange={(options) => setSelectedOptions(options)}
+            onGenerate={handleGenerate}
+            isLoading={isLoading}
+          />
+        )}
       </div>
 
       {isLoading ? <GenerationWaitOverlay /> : null}

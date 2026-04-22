@@ -1,5 +1,3 @@
-import type { AspectRatio, Resolution } from "@/types";
-
 /** Thrown when KIE recordInfo reports a failed job (failCode / failMsg). */
 export class KieJobFailedError extends Error {
   readonly failCode: string | null;
@@ -27,8 +25,9 @@ type KiePollJson = {
 
 export async function createTask(
   prompt: string,
-  aspectRatio: AspectRatio,
-  resolution: Resolution = "1K",
+  modelId: string,
+  selectedOptions: Record<string, string>,
+  expectedPrice: number,
   imageInputs: string[] = [],
 ): Promise<string> {
   const res = await fetch("/api/kie/create-task", {
@@ -36,8 +35,9 @@ export async function createTask(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       prompt,
-      aspectRatio,
-      resolution,
+      modelId,
+      options: selectedOptions,
+      expectedPrice,
       imageInputs,
     }),
   });

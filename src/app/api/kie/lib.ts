@@ -1,4 +1,3 @@
-import type { AspectRatio, Resolution } from "@/types";
 
 const BASE_URL = "https://api.kie.ai/api/v1";
 
@@ -36,20 +35,27 @@ export interface KiePollResult {
   errorMessage?: string;
 }
 
+export interface KieCreateTaskParams {
+  prompt: string;
+  aspectRatio: string;
+  resolution: string;
+  outputFormat: string;
+  imageInputs: string[];
+  providerModelId: string;
+}
+
 export async function kieCreateTask(
-  prompt: string,
-  aspectRatio: AspectRatio,
-  resolution: Resolution,
-  imageInputs: string[],
+  params: KieCreateTaskParams,
 ): Promise<string> {
+  const { prompt, aspectRatio, resolution, outputFormat, imageInputs, providerModelId } = params;
   const API_KEY = getKieApiKey();
   const body: Record<string, unknown> = {
-    model: "nano-banana-2",
+    model: providerModelId,
     input: {
       prompt: prompt.trim(),
       aspect_ratio: aspectRatio,
       resolution,
-      output_format: "jpg",
+      output_format: outputFormat,
       ...(imageInputs.length > 0 ? { image_input: imageInputs } : {}),
     },
   };

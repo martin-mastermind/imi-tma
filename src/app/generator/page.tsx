@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useGeneration } from "@/context/GenerationContext";
 import GeneratorScreen from "@/components/GeneratorScreen";
 import { PAGE_TRANSITION } from "@/constants";
-import type { AspectRatio, Resolution, UploadedImage } from "@/types";
+import type { UploadedImage } from "@/types";
 
 export default function GeneratorPage() {
   const router = useRouter();
@@ -13,11 +13,12 @@ export default function GeneratorPage() {
 
   const handleGenerate = async (
     prompt: string,
-    aspectRatio: AspectRatio,
-    resolution: Resolution,
+    modelId: string,
+    selectedOptions: Record<string, string>,
+    expectedPrice: number,
     images: UploadedImage[],
   ) => {
-    await generate(prompt, aspectRatio, resolution, images);
+    await generate(prompt, modelId, selectedOptions, expectedPrice, images);
     router.push("/result");
   };
 

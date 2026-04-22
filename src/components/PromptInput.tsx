@@ -1,14 +1,14 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MODELS } from "@/constants";
+import type { PublicModel } from "@/lib/catalog";
 import ChevronIcon from "@/../public/icons/icon-chevron.svg";
 
 interface PromptInputProps {
   value: string;
   onChange: (value: string) => void;
   selectedModel: string;
-  onModelChange: (model: string) => void;
+  onModelChange: (modelId: string) => void;
 }
 
 export default function PromptInput({
@@ -18,6 +18,24 @@ export default function PromptInput({
   onModelChange,
 }: PromptInputProps) {
   const [modelOpen, setModelOpen] = useState(false);
+  const [models, setModels] = useState<PublicModel[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/models")
+      .then((res) => res.json())
+      .then((data: PublicModel[]) => {
+        setModels(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to load models:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  const selectedModelData = models.find((m) => m.id === selectedModel);
+  const displayLabel = selectedModelData?.label || selectedModel || "Модель";
 
   return (
     <div className="flex flex-col mx-[15px] mt-[19px] bg-bg-card border border-[#343537] rounded-[12px]">
@@ -36,7 +54,7 @@ export default function PromptInput({
           Модель
         </label>
         <div className="flex items-center gap-[10px] text-white text-[14px] font-norms">
-          <span>{selectedModel}</span>
+          <span>{displayLabel}</span>
           <ChevronIcon width={16} height={16} className="text-white" />
         </div>
       </motion.button>
@@ -49,20 +67,26 @@ export default function PromptInput({
             exit={{ opacity: 0, y: -8, scaleY: 0.95 }}
             transition={{ duration: 0.2 }}
           >
-            {MODELS.map((model) => (
-              <motion.button
-                key={model}
-                onClick={() => {
-                  onModelChange(model);
-                  setModelOpen(false);
-                }}
-                className="w-full px-4 py-2 text-left text-white text-[14px] hover:bg-[rgba(255,255,255,0.1)]"
-                whileHover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-                transition={{ duration: 0.15 }}
-              >
-                {model}
-              </motion.button>
-            ))}
+            {loading ? (
+              <div className="px-4 py-2 text-text-muted text-[14px]">
+                Загрузка...
+              </div>
+            ) : (
+              models.map((model) => (
+                <motion.button
+                  key={model.id}
+                  onClick={() => {
+                    onModelChange(model.id);
+                    setModelOpen(false);
+                  }}
+                  className="w-full px-4 py-2 text-left text-white text-[14px] hover:bg-[rgba(255,255,255,0.1)]"
+                  whileHover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
+                  transition={{ duration: 0.15 }}
+                >
+                  {model.label}
+                </motion.button>
+              ))
+            )}
           </motion.div>
         )}
       </AnimatePresence>

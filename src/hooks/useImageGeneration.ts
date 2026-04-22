@@ -1,6 +1,6 @@
 'use client';
 import { useState, useCallback } from 'react';
-import type { GenerationState, AspectRatio, Resolution, UploadedImage } from '@/types';
+import type { GenerationState, UploadedImage } from '@/types';
 import { createTask, KieJobFailedError, pollJobStatus } from '@/services/imageService';
 
 function toAbsoluteImageUrl(url: string, origin: string): string {
@@ -17,8 +17,9 @@ export function useImageGeneration() {
 
   const generate = useCallback(async (
     prompt: string,
-    aspectRatio: AspectRatio,
-    resolution: Resolution,
+    modelId: string,
+    selectedOptions: Record<string, string>,
+    expectedPrice: number,
     images: UploadedImage[]
   ) => {
     setState({ status: 'loading' });
@@ -28,7 +29,7 @@ export function useImageGeneration() {
         .filter((img) => !img.isTemplate)
         .map((img) => toAbsoluteImageUrl(img.dataUrl, origin));
 
-      const taskId = await createTask(prompt, aspectRatio, resolution, imageInputs);
+      const taskId = await createTask(prompt, modelId, selectedOptions, expectedPrice, imageInputs);
       const imageUrl = await pollJobStatus(taskId);
       setState({ status: 'success', imageUrl });
     } catch (err) {

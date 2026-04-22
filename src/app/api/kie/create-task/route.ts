@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { AspectRatio, Resolution } from "@/types";
 import { kieCreateTask } from "../lib";
+import { computePrice, getFullModel } from "@/lib/catalog";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,8 +17,13 @@ export async function POST(request: NextRequest) {
 
     const b = body as Record<string, unknown>;
     const prompt = typeof b.prompt === "string" ? b.prompt : "";
-    const aspectRatio = b.aspectRatio as AspectRatio;
-    const resolution = (b.resolution as Resolution) ?? "1K";
+    const modelId = typeof b.modelId === "string" ? b.modelId : "";
+    const options =
+      b.options && typeof b.options === "object"
+        ? (b.options as Record<string, string>)
+        : {};
+    const expectedPrice =
+      typeof b.expectedPrice === "number" ? b.expectedPrice : -1;
     const imageInputs = Array.isArray(b.imageInputs)
       ? b.imageInputs.filter((u): u is string => typeof u === "string")
       : [];
@@ -30,12 +35,63 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const taskId = await kieCreateTask(
-      prompt,
-      aspectRatio,
-      resolution,
-      imageInputs,
+    if (!modelId) {
+      return NextResponse.json(
+        { error: "modelId is required" },
+        { status: 400 },
+      );
+    }
+
+    // Look up model from catalog
+    const model = getFullModel(modelId);
+    if (!model) {
+      return NextResponse.json(
+        { error: "Model not found" },
+        { status: 404 },
+      );
+    }
+
+    // Validate price
+    const computedPrice = computePrice(modelId, options);
+    if (computedPrice !== expectedPrice) {
+      return NextResponse.json(
+        { error: "Price mismatch" },
+        { status: 400 },
+      );
+    }
+
+    // Resolve provider values
+    const resolutionValueId = options.resolution || "1K";
+    const aspectRatioValueId = options.aspect_ratio || "1:1";
+    const outputFormatValueId = options.output_format || "jpg";
+
+    const resolutionOption = model.options.find(
+      (opt) => opt.id === "resolution",
     );
+    const resolutionValue = resolutionOption?.values.find(
+      (v) => v.id === resolutionValueId,
+    );
+    const resolvedResolution =
+      resolutionValue?.providerValue || resolutionValueId;
+
+    const outputFormatOption = model.options.find(
+      (opt) => opt.id === "output_format",
+    );
+    const outputFormatValue = outputFormatOption?.values.find(
+      (v) => v.id === outputFormatValueId,
+    );
+    const resolvedOutputFormat =
+      outputFormatValue?.providerValue || outputFormatValueId;
+
+    const taskId = await kieCreateTask({
+      prompt,
+      aspectRatio: aspectRatioValueId,
+      resolution: resolvedResolution,
+      outputFormat: resolvedOutputFormat,
+      imageInputs,
+      providerModelId: model.providerModelId,
+    });
+
     return NextResponse.json({ taskId });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Create task failed";
