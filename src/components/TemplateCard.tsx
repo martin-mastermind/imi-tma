@@ -16,16 +16,15 @@ export default function TemplateCard({
 }: TemplateCardProps) {
   return (
     <motion.div
-      className={`relative w-[128px] h-[176px] rounded-[24px] overflow-hidden flex-shrink-0 cursor-pointer ${
-        isSelected
-          ? "ring-2 ring-white ring-offset-2 ring-offset-[#3c84dd]"
-          : ""
-      }`}
+      className="relative w-[128px] h-[176px] rounded-[24px] overflow-hidden flex-shrink-0 cursor-pointer"
       onClick={onClick}
       whileTap={{ scale: 0.95 }}
     >
       <Image src={imageUrl} alt={name} fill className="object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-[24px]" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+      {isSelected && (
+        <div className="absolute inset-0 rounded-[24px] ring-2 ring-inset ring-white pointer-events-none" />
+      )}
       <span className="absolute bottom-[10px] left-2 font-machina font-medium text-[14px] text-white leading-[17.5px]">
         {name}
       </span>
