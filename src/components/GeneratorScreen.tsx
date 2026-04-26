@@ -95,16 +95,13 @@ export default function GeneratorScreen({
     const isAlreadySelected = uploads.some((u) => u.label === templateLabel);
 
     if (isAlreadySelected) {
-      // Remove template if already selected
       setUploads((u) => u.filter((img) => img.label !== templateLabel));
       setTemplatePrompts((p) =>
         p.filter((prompt) => prompt !== template.prompt),
       );
     } else {
-      // Add template if not selected
-      if (uploads.length >= 10) return;
       setUploads((u) => [
-        ...u,
+        ...u.filter((img) => !img.isTemplate),
         {
           id: newUploadId(),
           dataUrl: template.url,
@@ -112,8 +109,7 @@ export default function GeneratorScreen({
           isTemplate: true,
         },
       ]);
-      // Add template prompt
-      setTemplatePrompts((p) => [...p, template.prompt]);
+      setTemplatePrompts([template.prompt]);
     }
   };
 
