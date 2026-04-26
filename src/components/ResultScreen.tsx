@@ -7,6 +7,10 @@ import CloseIcon from "@/../public/icons/icon-close.svg";
 import PhotoIcon from "@/../public/icons/icon-photo.svg";
 import ChevronIcon from "@/../public/icons/icon-chevron.svg";
 
+interface TelegramWindow extends Window {
+  Telegram?: { WebApp?: { initData?: string } };
+}
+
 interface ResultScreenProps {
   variant: "success" | "error";
   imageUrl?: string;
@@ -149,6 +153,7 @@ export default function ResultScreen({
   const [copyError, setCopyError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [sendStatus, setSendStatus] = useState<"pending" | "sent" | "error">("pending");
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -156,6 +161,19 @@ export default function ResultScreen({
       if (copyResetRef.current) clearTimeout(copyResetRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (variant !== "success" || !imageUrl) return;
+    const initData = (window as TelegramWindow).Telegram?.WebApp?.initData;
+    if (!initData) { setSendStatus("error"); return; }
+    fetch("/api/telegram/send-photo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData, imageUrl }),
+    })
+      .then(r => setSendStatus(r.ok ? "sent" : "error"))
+      .catch(() => setSendStatus("error"));
+  }, [variant, imageUrl]);
 
   const scheduleCopiedReset = () => {
     if (copyResetRef.current) clearTimeout(copyResetRef.current);
@@ -320,6 +338,10 @@ export default function ResultScreen({
           <p className="text-text-muted text-[13px] font-norms">Готово</p>
           <p className="text-text-light text-[15px] font-norms font-medium leading-snug">
             Изображение готово
+          </p>
+          <p className="text-text-muted text-[12px] font-norms mt-[2px]" aria-live="polite">
+            {sendStatus === "pending" && "Отправляем в Telegram…"}
+            {sendStatus === "sent" && "Отправлено в чат ✓"}
           </p>
         </div>
         <div className="relative min-h-[200px] flex-1">
